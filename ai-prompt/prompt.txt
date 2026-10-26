@@ -1,0 +1,113 @@
+You are helping me add [COUNTRY] to an open-source "financial independence" calculator.
+I've attached data/build-countries.js, which shows how Canada and Italy are built.
+Write one JavaScript function for [COUNTRY] in exactly the same shape.
+
+HOUSEHOLD AND UNITS
+- Every amount is for a household of TWO ADULTS, per year, in the local currency,
+  in today's money (no inflation adjustments into the future).
+- Use the most recent data available, ideally 2023 or later.
+
+SOURCE RULES (most important)
+- Search the web for every number. Never make up a figure or a URL.
+- Preferred order: (1) the national statistics office, central bank, finance ministry,
+  tax authority or public pension agency; (2) World Bank, OECD, IMF, WHO, Eurostat;
+  (3) reputable non-government sources (industry associations, universities,
+  well-known research yearbooks); (4) a clearly labelled rule of thumb.
+- Give every number a direct URL to the page or report where it appears.
+- If you cannot find an official figure, say so plainly, use a rule of thumb,
+  and set its type to "convention". Do not dress up a guess as official data.
+- Label each source with one type:
+  "official"   published directly by a government or statistics agency
+  "derived"    calculated from official figures (show the arithmetic)
+  "reputable"  non-government but widely cited
+  "convention" a planning rule of thumb, no official figure exists
+  "personal"   depends on the user; example value only
+
+HOW TO DERIVE EACH NUMBER
+- coreSpend: average household consumption spending, MINUS housing (rent, imputed
+  rent, mortgage), utilities, health and education, which are separate inputs.
+  Convert from the average household size to two adults using the national
+  statistics office's own equivalence scale. If it has none, use the square-root
+  scale (cost ∝ √household size). Show the arithmetic in `derivation`.
+- medical: out-of-pocket health spending per household (not insurance-covered,
+  not tax-funded), scaled to two adults. If no national figure exists, use
+  WHO/World Bank out-of-pocket spending per person × 2.
+- otherAnnual: household utilities (electricity, gas/heating, water, waste charges).
+- housing.rent: average rent for a two-bedroom home, yearly. Say whether it is
+  asking rent (new leases) or rent actually paid (all leases).
+- housing.homePrice: average or median price of a home sold, national.
+- housing.propertyTaxRate: yearly property tax as a share of value for a primary
+  home (0 if primary homes are exempt). housing.closingCostRate: purchase taxes
+  and fees as a share of price. housing.mortgage.rate: current average new
+  mortgage rate from the central bank or banking association.
+  housing.maintenanceRate: 0.01 as a convention unless better data exists.
+- kidTemplate.annualCost: the extra yearly household spending one child adds,
+  from the equivalence scale above (for example, √3/√2 − 1 ≈ 22.5% of a couple's
+  core spending). kidTemplate.educationCost: average public university tuition
+  × typical years of study. kidTemplate.independentAge: 18 unless national
+  data shows young adults typically leave home much later; explain in a note.
+- pension.annual: the public pension a couple aged 30 TODAY can expect, after tax,
+  for both adults. Start from the average new pension, then adjust for any official
+  projection of falling replacement rates for younger workers. Count the number of
+  payments per year correctly (for example, Italy pays 13).
+- pension.startAge: the statutory age that someone aged 30 today will face, using
+  any legislated or officially projected increases.
+- lifeExpectancy: keep 90 as the planning age, and cite life expectancy at birth.
+- longTermCare.annual: what a household pays itself for one person in a care home
+  per year (after public subsidies), startAge 85.
+- inflation: the central bank's inflation target.
+- nominalReturn: keep 0.07 and cite the UBS Global Investment Returns Yearbook,
+  unless you have strong reason to change it.
+- fee: 0.0025 for fund costs, PLUS any yearly wealth tax or stamp duty on investment
+  accounts (for example, Italy adds 0.002).
+- taxRate: the effective tax on withdrawals from a typical investment account.
+  Explain the national rules (capital gains rate, inclusion rate, tax-free accounts)
+  and the blended rate you chose.
+- withdrawalRate: 0.035, or lower if the country's market history is weak.
+- buffer: six months of coreSpend + medical + otherAnnual + rent.
+- Example personal values: currentInvestments, annualSavings and netIncome should
+  be plausible for an average two-adult household; mark them "personal".
+
+OUTPUT FORMAT
+Return ONLY a JavaScript function in this shape, with real values and real sources:
+
+function [countryname]() {
+  const RAW = { /* every raw official figure, each with a comment naming its source and year */ };
+  // derived numbers computed from RAW here, using r(x, step) for rounding
+
+  return {
+    name: '[Country name in English]', currency: '[ISO 4217 code]', uiLocale: 'en-[ISO country code]',
+    household: 'Two adults',
+    params: {
+      currentAge: 30, lifeExpectancy: 90,
+      currentInvestments: 0, savingsMode: 'fixed', annualSavings: 0, netIncome: 0,
+      nominalReturn: 0.07, inflation: 0, fee: 0,
+      withdrawalRate: 0.035, method: 'swr', taxRate: 0,
+      coreSpend: 0, medical: 0, otherAnnual: 0, buffer: 0,
+      housing: {
+        mode: 'rent', rent: 0, homePrice: 0,
+        propertyTaxRate: 0, maintenanceRate: 0.01, insurance: 0, closingCostRate: 0,
+        mortgage: { principal: 0, rate: 0, termYears: 25, yearsElapsed: 0 },
+      },
+      kids: [],
+      pension: { annual: 0, startAge: 0 },
+      longTermCare: { annual: 0, startAge: 85 },
+    },
+    kidTemplate: { age: -1, annualCost: 0, independentAge: 18, educationCost: 0, educationAge: 18 },
+    sources: {
+      // One entry per key below:
+      // { type, year, source, url, derivation, note }
+      // REQUIRED with source + url + year: coreSpend, medical, 'housing.rent',
+      //   'housing.homePrice', 'kids.annualCost', 'kids.educationCost', 'pension.annual',
+      //   lifeExpectancy, 'longTermCare.annual', nominalReturn, taxRate
+      // ALSO INCLUDE: otherAnnual, 'housing.propertyTaxRate', 'housing.maintenanceRate',
+      //   'housing.insurance', 'housing.closingCostRate', 'housing.mortgage.rate',
+      //   'pension.startAge', inflation, fee, withdrawalRate, buffer,
+      //   currentAge, currentInvestments, annualSavings, netIncome
+    },
+  };
+}
+
+AFTER THE FUNCTION, add a short list titled "Check these yourself" naming every
+number you are least sure about and why (old data, a proxy, a regional rather than
+national figure, a source you couldn't open in full).
