@@ -1,0 +1,1782 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>How much do I need to be financially free?</title>
+  <meta name="description" content="Work out how much you need to stop working for good, using official data for Canada and Italy. Change any number, or solve backwards for what you need to earn, save or spend.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap">
+  <style>
+/* Palette: cool paper, pine ink. Two data colours carry the whole story:
+   teal = what you'll have, ochre = what you need. Where they cross, you're free. */
+:root {
+  --paper: #f1f4f2;
+  --surface: #ffffff;
+  --ink: #14231f;
+  --muted: #5a6964;
+  --line: #d3dbd7;
+  --wealth: #1d6b70;
+  --wealth-soft: rgba(29, 107, 112, 0.12);
+  --target: #b9821c;
+  --bad: #a3392b;
+  --focus: #1d6b70;
+  --font: "Schibsted Grotesk", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  color-scheme: light;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #0e1614;
+    --surface: #15201d;
+    --ink: #e4ebe8;
+    --muted: #93a39e;
+    --line: #2a3833;
+    --wealth: #5cb4b0;
+    --wealth-soft: rgba(92, 180, 176, 0.14);
+    --target: #e0ad4c;
+    --bad: #e07a6b;
+    --focus: #5cb4b0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #0e1614; --surface: #15201d; --ink: #e4ebe8; --muted: #93a39e; --line: #2a3833;
+  --wealth: #5cb4b0; --wealth-soft: rgba(92, 180, 176, 0.14); --target: #e0ad4c; --bad: #e07a6b;
+  --focus: #5cb4b0; color-scheme: dark;
+}
+
+*, *::before, *::after { box-sizing: inherit; }
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 16px/1.5 var(--font);
+  font-variant-numeric: tabular-nums;
+  -webkit-font-smoothing: antialiased;
+}
+a { color: var(--wealth); }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+
+/* ── Header ─────────────────────────────────────────── */
+.masthead { border-bottom: 1px solid var(--line); }
+.masthead-inner {
+  max-width: 1240px; margin: 0 auto; padding: 20px 24px;
+  display: flex; flex-wrap: wrap; gap: 16px; align-items: center; justify-content: space-between;
+}
+.masthead h1 { margin: 0; font-size: 1.25rem; font-weight: 700; letter-spacing: -0.01em; }
+.country { display: inline-flex; border: 1px solid var(--line); border-radius: 999px; padding: 3px; background: var(--surface); }
+.country button {
+  font: inherit; font-weight: 600; font-size: 0.9375rem; border: 0; background: none; color: var(--muted);
+  padding: 6px 16px; border-radius: 999px; cursor: pointer;
+}
+.country button[aria-checked="true"] { background: var(--ink); color: var(--paper); }
+
+/* ── Layout ─────────────────────────────────────────── */
+.layout {
+  max-width: 1240px; margin: 0 auto; padding: 24px;
+  display: grid; grid-template-columns: minmax(300px, 380px) minmax(0, 1fr); gap: 40px; align-items: start;
+}
+@media (max-width: 860px) {
+  .layout { grid-template-columns: 1fr; gap: 24px; padding: 16px; }
+  .results { order: -1; }
+}
+
+/* ── Inputs ─────────────────────────────────────────── */
+.inputs { position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow-y: auto; padding-right: 4px; }
+@media (max-width: 860px) { .inputs { position: static; max-height: none; overflow: visible; } }
+
+.group { border-top: 1px solid var(--line); }
+.group:last-child { border-bottom: 1px solid var(--line); }
+.group > summary {
+  list-style: none; cursor: pointer; padding: 14px 0; font-weight: 700; font-size: 1.0625rem;
+  display: flex; align-items: baseline; gap: 12px;
+}
+.group > summary .peek { margin-left: auto; }
+.group > summary::-webkit-details-marker { display: none; }
+.group > summary .peek { font-weight: 500; font-size: 0.875rem; color: var(--muted); }
+.group > summary::after { content: "+"; color: var(--muted); font-weight: 500; }
+.group[open] > summary::after { content: "−"; }
+.group-body { padding: 0 0 16px; display: grid; gap: 14px; }
+
+.field { display: grid; gap: 4px; }
+.field[hidden] { display: none; }
+.field-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.field label { font-size: 0.9375rem; font-weight: 500; }
+.src-toggle {
+  font: inherit; font-size: 0.8125rem; color: var(--muted); background: none; border: 0; padding: 0;
+  text-decoration: underline; text-underline-offset: 2px; cursor: pointer; white-space: nowrap;
+}
+.control {
+  display: flex; align-items: center; background: var(--surface); border: 1px solid var(--line);
+  border-radius: 8px; padding: 0 10px;
+}
+.control:focus-within { border-color: var(--focus); box-shadow: 0 0 0 1px var(--focus); }
+.control input, .control select {
+  flex: 1; min-width: 0; width: 100%; font: inherit; font-variant-numeric: tabular-nums; color: var(--ink);
+  background: transparent; border: 0; padding: 9px 0; outline: none;
+}
+.control select { cursor: pointer; }
+.control .affix { color: var(--muted); font-size: 0.875rem; white-space: nowrap; flex: none; }
+.inputs { overflow-x: hidden; }
+.control .affix.pre { margin-right: 6px; }
+.control .affix.post { margin-left: 6px; }
+.hint { margin: 0; font-size: 0.8125rem; color: var(--muted); }
+
+.src { font-size: 0.8125rem; color: var(--muted); border-left: 2px solid var(--line); padding: 4px 0 4px 10px; margin-top: 2px; }
+.src p { margin: 0 0 4px; }
+.src .badge { font-weight: 700; color: var(--ink); }
+.src .badge.official, .src .badge.derived { color: var(--wealth); }
+.src .badge.convention, .src .badge.personal { color: var(--target); }
+
+.kid { border: 1px solid var(--line); border-radius: 10px; padding: 12px; display: grid; gap: 10px; background: var(--surface); }
+.kid-head { display: flex; justify-content: space-between; align-items: baseline; font-weight: 600; }
+.kid .control { background: var(--paper); }
+.link-btn {
+  font: inherit; font-size: 0.875rem; color: var(--wealth); background: none; border: 0; padding: 0;
+  cursor: pointer; text-decoration: underline; text-underline-offset: 2px;
+}
+.link-btn.danger { color: var(--muted); }
+.add-kid {
+  font: inherit; font-weight: 600; border: 1px dashed var(--line); background: none; color: var(--ink);
+  border-radius: 10px; padding: 10px; cursor: pointer;
+}
+.add-kid:hover { border-color: var(--wealth); color: var(--wealth); }
+.reset {
+  margin: 16px 0 8px; font: inherit; font-size: 0.875rem; color: var(--muted); background: none;
+  border: 0; padding: 0; text-decoration: underline; cursor: pointer;
+}
+
+/* ── Results ────────────────────────────────────────── */
+.verdict { padding: 4px 0 8px; }
+.verdict .lead { margin: 0; font-size: 1.125rem; color: var(--muted); font-weight: 500; }
+.verdict .age {
+  display: block; font-size: clamp(4.5rem, 12vw, 8.5rem); line-height: 0.9; font-weight: 800;
+  letter-spacing: -0.04em; margin: 4px 0 12px;
+}
+.verdict .age.not { font-size: clamp(2.5rem, 7vw, 4.5rem); line-height: 1; letter-spacing: -0.03em; }
+.verdict .sub { margin: 0; max-width: 60ch; font-size: 1.0625rem; }
+.verdict .sub strong { font-weight: 700; }
+.verdict .w { color: var(--wealth); }
+.verdict .t { color: var(--target); }
+
+.chart { margin: 20px 0 8px; }
+.chart svg { display: block; max-width: 100%; height: auto; overflow: visible; }
+.chart .grid { stroke: var(--line); stroke-width: 1; }
+.chart .tick { fill: var(--muted); font: 500 12px var(--font); }
+.chart .wealth { fill: none; stroke: var(--wealth); stroke-width: 3; stroke-linejoin: round; }
+.chart .wealth-area { fill: var(--wealth-soft); }
+.chart .target { fill: none; stroke: var(--target); stroke-width: 3; stroke-dasharray: 7 5; }
+.chart .goal-line { stroke: var(--ink); stroke-width: 1; stroke-dasharray: 2 4; }
+.chart .cross { fill: var(--surface); stroke: var(--ink); stroke-width: 2.5; }
+.chart .cross-label { fill: var(--ink); font: 700 13px var(--font); paint-order: stroke; stroke: var(--paper); stroke-width: 5px; stroke-linejoin: round; }
+.chart figcaption { display: flex; gap: 20px; flex-wrap: wrap; font-size: 0.875rem; color: var(--muted); margin-top: 6px; }
+.key { display: inline-flex; align-items: center; gap: 8px; }
+.key::before { content: ""; width: 22px; height: 0; border-top: 3px solid var(--wealth); }
+.key.t::before { border-top: 3px dashed var(--target); }
+
+.goal { margin: 24px 0; padding: 20px; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; }
+.goal-label { font-weight: 700; font-size: 1.125rem; display: block; margin-bottom: 8px; }
+.goal-label output { color: var(--wealth); }
+#goal-age { width: 100%; accent-color: var(--wealth); }
+.goal-figures { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 16px 24px; margin: 16px 0 0; }
+.goal-figures div { display: grid; gap: 2px; }
+.goal-figures dt { font-size: 0.875rem; color: var(--muted); }
+.goal-figures dd { margin: 0; font-size: 1.5rem; font-weight: 700; letter-spacing: -0.01em; }
+.goal-figures dd small { font-size: 0.875rem; font-weight: 500; color: var(--muted); }
+.goal-figures .bad { color: var(--bad); }
+
+.panel { margin: 28px 0; }
+.panel h2 { font-size: 1.125rem; margin: 0 0 4px; }
+.panel .intro { margin: 0 0 14px; color: var(--muted); font-size: 0.9375rem; max-width: 65ch; }
+
+.stack { display: flex; height: 14px; border-radius: 7px; overflow: hidden; background: var(--line); margin-bottom: 12px; }
+.stack span { display: block; height: 100%; }
+.parts { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.parts li { display: grid; grid-template-columns: 12px 1fr auto auto; gap: 10px; align-items: baseline; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.parts .sw { width: 10px; height: 10px; border-radius: 3px; align-self: center; }
+.parts .val { font-weight: 600; text-align: right; }
+.parts .pct { color: var(--muted); font-size: 0.875rem; min-width: 3.5ch; text-align: right; }
+.parts li.total { border-bottom: 0; font-weight: 700; }
+
+.solve-row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.solve-row .control { flex: 1 1 260px; }
+.answer { margin: 14px 0 0; font-size: 1.125rem; max-width: 60ch; }
+.answer strong { color: var(--wealth); }
+.answer.none { color: var(--muted); font-size: 1rem; }
+
+.error { color: var(--bad); font-weight: 600; }
+
+/* ── Footer & mobile bar ────────────────────────────── */
+.footer { max-width: 1240px; margin: 0 auto; padding: 24px 24px 88px; color: var(--muted); font-size: 0.875rem; }
+.footer p { margin: 0 0 6px; max-width: 80ch; }
+.mobile-bar { display: none; }
+@media (max-width: 860px) {
+  .mobile-bar {
+    display: block; position: fixed; left: 0; right: 0; bottom: 0; z-index: 10;
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
+    background: var(--ink); color: var(--paper); font-weight: 700; text-align: center;
+  }
+}
+@media (prefers-reduced-motion: no-preference) {
+  .country button, .add-kid { transition: background-color .15s, color .15s, border-color .15s; }
+}
+</style>
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <h1>How much do I need to be financially free?</h1>
+      <div class="country" role="radiogroup" aria-label="Country" id="country"></div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="inputs" aria-label="Your numbers">
+      <form id="form" novalidate></form>
+      <button type="button" class="reset" id="reset">Reset to national averages</button>
+    </section>
+
+    <section class="results" aria-live="polite" aria-label="Results">
+      <div class="verdict" id="verdict"></div>
+      <figure class="chart" id="chart"></figure>
+
+      <div class="goal" id="goal">
+        <label for="goal-age" class="goal-label">Stop working at <output id="goal-age-out"></output></label>
+        <input type="range" id="goal-age">
+        <dl class="goal-figures" id="goal-figures"></dl>
+      </div>
+
+      <div class="panel" id="breakdown"></div>
+      <div class="panel" id="solve"></div>
+      <p class="error" id="error" hidden></p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p id="disclaimer"></p>
+    <p>All amounts are in today’s money.</p>
+  </footer>
+
+  <div class="mobile-bar" id="mobile-bar" aria-hidden="true"></div>
+
+  <script>
+/*!
+ * FI Engine — "How much do I need to be financially free?"
+ *
+ * Pure calculation core: no DOM, no country data, no side effects.
+ * Works in the browser (window.FIEngine) and in Node (require('./engine')).
+ *
+ * CONVENTIONS
+ *  - All money is in TODAY'S currency (real terms). Inflation only enters via the real return.
+ *  - Amounts are annual unless the name says otherwise.
+ *  - After FI, spending is withdrawn at the START of each year (annuity-due).
+ *  - Before FI, savings are contributed at the END of each year.
+ *  - Pension amounts are NET (after tax). taxRate (τ) is the effective tax on portfolio withdrawals,
+ *    and every component of the target is grossed up by 1 / (1 − τ).
+ *
+ * THE FORMULA
+ *  FI_target = [ Living + Bridge + Kids + Education + LongTermCare + HousingLump + Buffer ] / (1 − τ)
+ *    Living       = (S + M + Other + H_run − P) / w           (method "swr", perpetual)
+ *                 = PV of (S + M + Other + H_run − P) over remaining life  (method "annuity", spend-down)
+ *    Bridge       = PV of P from FI age until pension start age
+ *    Kids         = Σ PV of each child's remaining dependent-year costs
+ *    Education    = Σ PV of each child's post-secondary lump sum
+ *    LongTermCare = PV of late-life care costs
+ *    HousingLump  = remaining mortgage (real) or purchase price + closing costs
+ *  Path: W_n = W_0·(1+r)^n + PMT·((1+r)^n − 1)/r ; you are free when W_n ≥ FI_target(n)
+ */
+(function (root, factory) {
+  if (typeof module === 'object' && module.exports) module.exports = factory();
+  else root.FIEngine = factory();
+})(typeof self !== 'undefined' ? self : this, function () {
+  'use strict';
+
+  const EPS = 1e-9;
+
+  // ───────────────────────────── financial primitives ─────────────────────────────
+
+  /** Real return net of fees: (1 + nominal − fee) / (1 + inflation) − 1 */
+  function realReturn(nominal, inflation, fee) {
+    return (1 + nominal - (fee || 0)) / (1 + inflation) - 1;
+  }
+
+  function discount(r, t) {
+    return Math.pow(1 + r, -t);
+  }
+
+  /**
+   * Present value of `amount` paid at the start of each year for `years` years,
+   * with the first payment `delay` years from now.
+   */
+  function pvStream(amount, years, r, delay) {
+    delay = delay || 0;
+    if (!(years > 0) || amount === 0) return 0;
+    const pv = Math.abs(r) < EPS
+      ? amount * years
+      : amount * (1 - Math.pow(1 + r, -years)) / r * (1 + r);
+    return pv * discount(r, delay);
+  }
+
+  /** Future value of starting wealth w0 plus end-of-year contributions pmt, after n years. */
+  function fvSavings(w0, pmt, r, n) {
+    if (Math.abs(r) < EPS) return w0 + pmt * n;
+    const g = Math.pow(1 + r, n);
+    return w0 * g + pmt * (g - 1) / r;
+  }
+
+  /** Monthly payment on a fixed-rate amortizing mortgage. */
+  function mortgagePayment(principal, annualRate, termYears) {
+    const n = termYears * 12;
+    const i = annualRate / 12;
+    if (n <= 0) return 0;
+    if (Math.abs(i) < EPS) return principal / n;
+    return principal * i / (1 - Math.pow(1 + i, -n));
+  }
+
+  /** Outstanding (nominal) balance after `monthsElapsed` payments. */
+  function mortgageBalance(principal, annualRate, termYears, monthsElapsed) {
+    const n = termYears * 12;
+    const i = annualRate / 12;
+    const k = Math.min(Math.max(monthsElapsed, 0), n);
+    if (k >= n) return 0;
+    const pay = mortgagePayment(principal, annualRate, termYears);
+    if (Math.abs(i) < EPS) return Math.max(0, principal - pay * k);
+    const g = Math.pow(1 + i, k);
+    return Math.max(0, principal * g - pay * (g - 1) / i);
+  }
+
+  // ───────────────────────────── components ─────────────────────────────
+
+  /** Annual cost of owning: property tax + maintenance (as % of value) + insurance. */
+  function carryingCost(h) {
+    return (h.homePrice || 0) * ((h.propertyTaxRate || 0) + (h.maintenanceRate || 0)) + (h.insurance || 0);
+  }
+
+  /**
+   * Housing modes:
+   *  "rent"     rent forever                      → running = rent
+   *  "own"      owned outright                    → running = carrying cost
+   *  "mortgage" owned, mortgage being paid        → running = carrying cost, lump = balance left at FI
+   *  "buy"      renting now, buy outright at FI   → running = carrying cost, lump = price + closing costs
+   *  "none"     housing excluded (e.g. living with family)
+   * Returns { running, lump, current } where current = what housing costs you per year today.
+   */
+  function housing(p, n) {
+    const h = p.housing || { mode: 'none' };
+    const carry = carryingCost(h);
+    switch (h.mode) {
+      case 'rent':
+        return { running: h.rent || 0, lump: 0, current: h.rent || 0 };
+      case 'own':
+        return { running: carry, lump: 0, current: carry };
+      case 'mortgage': {
+        const m = h.mortgage || {};
+        const principal = m.principal || 0;
+        const rate = m.rate || 0;
+        const term = m.termYears || 0;
+        const elapsedNow = (m.yearsElapsed || 0) * 12;
+        const payment = mortgagePayment(principal, rate, term);
+        const nominalAtFI = mortgageBalance(principal, rate, term, Math.round(elapsedNow + n * 12));
+        const realAtFI = nominalAtFI / Math.pow(1 + (p.inflation || 0), Math.max(n, 0));
+        const stillPaying = mortgageBalance(principal, rate, term, elapsedNow) > 0;
+        return {
+          running: carry,
+          lump: realAtFI,
+          current: carry + (stillPaying ? payment * 12 : 0),
+          monthlyPayment: payment,
+        };
+      }
+      case 'buy':
+        return {
+          running: carry,
+          lump: (h.homePrice || 0) * (1 + (h.closingCostRate || 0)),
+          current: h.rent || 0,
+        };
+      default:
+        return { running: 0, lump: 0, current: 0 };
+    }
+  }
+
+  /**
+   * Kids. Each child: { age, annualCost, independentAge, educationCost, educationAge }.
+   * A negative age means the child is planned (age −2 = born in 2 years).
+   * Costs incurred before FI are assumed paid from income; only costs from the FI date on are funded.
+   */
+  function kids(p, n, r) {
+    let living = 0;
+    let education = 0;
+    let current = 0;
+    (p.kids || []).forEach(function (k) {
+      const indep = k.independentAge != null ? k.independentAge : 18;
+      const eduAge = k.educationAge != null ? k.educationAge : indep;
+      const ageAtFI = k.age + n;
+      const start = Math.max(0, ageAtFI);
+      living += pvStream(k.annualCost || 0, indep - start, r, start - ageAtFI);
+      if (eduAge >= ageAtFI) education += (k.educationCost || 0) * discount(r, eduAge - ageAtFI);
+      if (k.age >= 0 && k.age < indep) current += k.annualCost || 0;
+    });
+    return { living: living, education: education, current: current };
+  }
+
+  // ───────────────────────────── validation ─────────────────────────────
+
+  function validate(p, fiAge) {
+    const errors = [];
+    if (!(p.lifeExpectancy > p.currentAge)) errors.push('Life expectancy must be greater than current age.');
+    if (fiAge != null && fiAge < p.currentAge) errors.push('FI age cannot be earlier than current age.');
+    if (fiAge != null && fiAge >= p.lifeExpectancy) errors.push('FI age must be before life expectancy.');
+    if (p.method !== 'annuity' && !(p.withdrawalRate > 0)) errors.push('Withdrawal rate must be above 0.');
+    if (!(p.taxRate >= 0 && p.taxRate < 1)) errors.push('Tax rate must be between 0% and 100%.');
+    if (!(1 + p.inflation > 0)) errors.push('Inflation must be above −100%.');
+    return errors;
+  }
+
+  // ───────────────────────────── the formula ─────────────────────────────
+
+  /** FI target (in today's money) if you stop working at `fiAge`, with a full breakdown. */
+  function target(p, fiAge) {
+    const errors = validate(p, fiAge);
+    if (errors.length) throw new Error(errors.join(' '));
+
+    const n = fiAge - p.currentAge;
+    const r = realReturn(p.nominalReturn, p.inflation, p.fee);
+    const grossUp = 1 / (1 - (p.taxRate || 0));
+    const yearsInRetirement = p.lifeExpectancy - fiAge;
+
+    const h = housing(p, n);
+    const need = {
+      core: p.coreSpend || 0,
+      medical: p.medical || 0,
+      other: p.otherAnnual || 0,
+      housing: h.running,
+    };
+    const annualNeed = need.core + need.medical + need.other + need.housing;
+
+    const pen = p.pension || {};
+    const pension = Math.min(pen.annual || 0, annualNeed);
+    const pensionStart = pen.startAge != null ? pen.startAge : p.lifeExpectancy;
+    const bridgeYears = Math.max(0, Math.min(pensionStart, p.lifeExpectancy) - fiAge);
+
+    const living = p.method === 'annuity'
+      ? pvStream(annualNeed - pension, yearsInRetirement, r)
+      : (annualNeed - pension) / p.withdrawalRate;
+    const bridge = pvStream(pension, bridgeYears, r);
+
+    const ltc = p.longTermCare || {};
+    const ltcStart = Math.max(ltc.startAge || p.lifeExpectancy, fiAge);
+    const longTermCare = pvStream(ltc.annual || 0, p.lifeExpectancy - ltcStart, r, ltcStart - fiAge);
+
+    const k = kids(p, n, r);
+
+    const net = {
+      living: living,
+      pensionBridge: bridge,
+      kids: k.living,
+      education: k.education,
+      longTermCare: longTermCare,
+      housingLump: h.lump,
+      buffer: p.buffer || 0,
+    };
+    const components = {};
+    let total = 0;
+    Object.keys(net).forEach(function (key) {
+      components[key] = net[key] * grossUp;
+      total += components[key];
+    });
+
+    return {
+      fiAge: fiAge,
+      yearsToFI: n,
+      yearsInRetirement: yearsInRetirement,
+      realReturn: r,
+      annualNeed: annualNeed,
+      needBreakdown: need,
+      pensionUsed: pension,
+      bridgeYears: bridgeYears,
+      components: components,
+      total: total,
+    };
+  }
+
+  /**
+   * Spending in year t from now (today's money), used in income mode.
+   * Kids cost while 0 ≤ age < independentAge, education is paid in the year it falls due,
+   * the mortgage payment shrinks in real terms and stops once paid off, and "buy" keeps renting until FI.
+   */
+  function outflowAt(p, t) {
+    const h = p.housing || { mode: 'none' };
+    let housingCost = 0;
+    switch (h.mode) {
+      case 'rent': housingCost = h.rent || 0; break;
+      case 'buy': housingCost = h.rent || 0; break;
+      case 'own': housingCost = carryingCost(h); break;
+      case 'mortgage': {
+        const m = h.mortgage || {};
+        const months = ((m.yearsElapsed || 0) + t) * 12;
+        const paying = mortgageBalance(m.principal || 0, m.rate || 0, m.termYears || 0, months) > 0;
+        const pay = mortgagePayment(m.principal || 0, m.rate || 0, m.termYears || 0) * 12;
+        housingCost = carryingCost(h) + (paying ? pay / Math.pow(1 + (p.inflation || 0), t) : 0);
+        break;
+      }
+      default: housingCost = 0;
+    }
+    let kidCost = 0;
+    (p.kids || []).forEach(function (k) {
+      const indep = k.independentAge != null ? k.independentAge : 18;
+      const eduAge = k.educationAge != null ? k.educationAge : indep;
+      const age = k.age + t;
+      if (age >= 0 && age < indep) kidCost += k.annualCost || 0;
+      if (Math.round(age) === Math.round(eduAge)) kidCost += k.educationCost || 0;
+    });
+    return (p.coreSpend || 0) + (p.medical || 0) + (p.otherAnnual || 0) + housingCost + kidCost;
+  }
+
+  /**
+   * Costs in year t of children not yet born today (age < 0), including their education lump.
+   * Children you already have are part of today's budget; planned ones are not.
+   */
+  function plannedKidCostAt(p, t) {
+    let cost = 0;
+    (p.kids || []).forEach(function (k) {
+      if (!(k.age < 0)) return;
+      const indep = k.independentAge != null ? k.independentAge : 18;
+      const eduAge = k.educationAge != null ? k.educationAge : indep;
+      const age = k.age + t;
+      if (age >= 0 && age < indep) cost += k.annualCost || 0;
+      if (Math.round(age) === Math.round(eduAge)) cost += k.educationCost || 0;
+    });
+    return cost;
+  }
+
+  /**
+   * Savings in year t.
+   *  fixed:  the set amount, minus the costs of planned children while they're at home
+   *  income: net income minus that year's total spending
+   */
+  function savingsAt(p, t) {
+    return p.savingsMode === 'income'
+      ? (p.netIncome || 0) - outflowAt(p, t)
+      : (p.annualSavings || 0) - plannedKidCostAt(p, t);
+  }
+
+  function hasPlannedKids(p) {
+    return (p.kids || []).some(function (k) { return k.age < 0; });
+  }
+
+  /** Projected investments after n years. */
+  function wealthAt(p, n) {
+    const r = realReturn(p.nominalReturn, p.inflation, p.fee);
+    if (p.savingsMode !== 'income' && !hasPlannedKids(p)) return fvSavings(p.currentInvestments || 0, p.annualSavings || 0, r, n);
+    let w = p.currentInvestments || 0;
+    for (let t = 0; t < n; t++) w = w * (1 + r) + savingsAt(p, t);
+    return w;
+  }
+
+  /** Projected wealth minus target at a given FI age (≥ 0 means you are free). */
+  function gapAt(p, fiAge) {
+    return wealthAt(p, fiAge - p.currentAge) - target(p, fiAge).total;
+  }
+
+  /** Year-by-year projection of wealth vs the target if you stopped that year. */
+  function projection(p) {
+    const rows = [];
+    for (let n = 0; p.currentAge + n < p.lifeExpectancy; n++) {
+      const age = p.currentAge + n;
+      rows.push({ age: age, wealth: wealthAt(p, n), target: target(p, age).total });
+    }
+    return rows;
+  }
+
+  /** Earliest whole-year age at which projected wealth covers the target, or null. */
+  function earliestFI(p) {
+    for (let n = 0; p.currentAge + n < p.lifeExpectancy; n++) {
+      const age = p.currentAge + n;
+      const t = target(p, age);
+      const w = wealthAt(p, n);
+      if (w >= t.total) return { fiAge: age, years: n, wealth: w, target: t };
+    }
+    return null;
+  }
+
+  // ───────────────────────────── reverse calculations ─────────────────────────────
+
+  /** Annual savings needed to be free at `fiAge` (closed form, fixed-savings mode). */
+  function requiredSavings(p, fiAge) {
+    if (p.savingsMode === 'income') p = Object.assign({}, p, { savingsMode: 'fixed' });
+    const n = fiAge - p.currentAge;
+    const t = target(p, fiAge);
+    const r = t.realReturn;
+    const w0 = p.currentInvestments || 0;
+    if (n <= 0) {
+      const shortfall = Math.max(0, t.total - w0);
+      return { annual: null, monthly: null, lumpShortfall: shortfall, target: t };
+    }
+    const g = Math.pow(1 + r, n);
+    // Planned children's costs come out of savings; add back what they'd have grown to.
+    let kidDrag = 0;
+    for (let i = 0; i < n; i++) kidDrag += plannedKidCostAt(p, i) * Math.pow(1 + r, n - 1 - i);
+    const pmt = Math.abs(r) < EPS ? (t.total - w0 + kidDrag) / n : (t.total - w0 * g + kidDrag) * r / (g - 1);
+    const annual = Math.max(0, pmt);
+    return { annual: annual, monthly: annual / 12, lumpShortfall: 0, target: t };
+  }
+
+  /** What life costs you today: core + medical + other + current housing + kids now. */
+  function currentOutflow(p) {
+    const r = realReturn(p.nominalReturn, p.inflation, p.fee);
+    const h = housing(p, 0);
+    const k = kids(p, 0, r);
+    const parts = {
+      core: p.coreSpend || 0,
+      medical: p.medical || 0,
+      other: p.otherAnnual || 0,
+      housing: h.current,
+      kids: k.current,
+    };
+    let total = 0;
+    Object.keys(parts).forEach(function (key) { total += parts[key]; });
+    return { parts: parts, total: total };
+  }
+
+  /**
+   * Net (after-tax) income needed to be free at fiAge.
+   * Fixed mode: today's spending + required savings.
+   * Income mode: solved so that year-by-year (income − spending) exactly reaches the target.
+   */
+  function requiredNetIncome(p, fiAge) {
+    const out = currentOutflow(p);
+    if (p.savingsMode === 'income') {
+      const s = solve(p, 'netIncome', fiAge);
+      if (!s.solved) return { annual: null, monthly: null, spending: out.total, savings: null, reason: s.reason };
+      return { annual: s.value, monthly: s.value / 12, spending: out.total, savings: s.value - out.total };
+    }
+    const s = requiredSavings(p, fiAge);
+    if (s.annual == null) return { annual: null, monthly: null, spending: out.total, savings: null };
+    const annual = out.total + s.annual;
+    return { annual: annual, monthly: annual / 12, spending: out.total, savings: s.annual };
+  }
+
+  function clone(o) {
+    return JSON.parse(JSON.stringify(o));
+  }
+
+  /** Set a dotted path on an object; "*" applies to every element of an array. */
+  function setPath(obj, path, value) {
+    const keys = path.split('.');
+    (function walk(node, i) {
+      if (node == null) return;
+      const key = keys[i];
+      if (key === '*') {
+        if (Array.isArray(node)) node.forEach(function (child) { walk(child, i + 1); });
+        return;
+      }
+      if (i === keys.length - 1) { node[key] = value; return; }
+      if (node[key] == null) node[key] = {};
+      walk(node[key], i + 1);
+    })(obj, 0);
+    return obj;
+  }
+
+  function getPath(obj, path) {
+    return path.split('.').reduce(function (node, key) {
+      if (node == null) return undefined;
+      if (key === '*') return Array.isArray(node) && node.length ? node[0] : undefined;
+      return node[key];
+    }, obj);
+  }
+
+  /** Variables the UI can solve for, with sensible search bounds. */
+  const REVERSIBLE = {
+    annualSavings: { label: 'Household savings per year', path: 'annualSavings', lo: 0, hi: 1e8 },
+    netIncome: { label: 'Household take-home pay', path: 'netIncome', lo: 0, hi: 1e8 },
+    coreSpend: { label: 'Living costs per year', path: 'coreSpend', lo: 0, hi: 1e8 },
+    medical: { label: 'Medical (out-of-pocket) per year', path: 'medical', lo: 0, hi: 1e7 },
+    otherAnnual: { label: 'Other annual costs', path: 'otherAnnual', lo: 0, hi: 1e8 },
+    currentInvestments: { label: 'Invested today', path: 'currentInvestments', lo: 0, hi: 1e10 },
+    nominalReturn: { label: 'Stock market return', path: 'nominalReturn', lo: -0.05, hi: 0.3 },
+    withdrawalRate: { label: 'Withdrawal rate', path: 'withdrawalRate', lo: 0.005, hi: 0.2 },
+    homePrice: { label: 'Home price', path: 'housing.homePrice', lo: 0, hi: 1e9 },
+    rent: { label: 'Rent per year', path: 'housing.rent', lo: 0, hi: 1e7 },
+    kidAnnualCost: { label: 'Annual cost per child', path: 'kids.*.annualCost', lo: 0, hi: 1e7 },
+    pension: { label: 'Pension per year, after tax', path: 'pension.annual', lo: 0, hi: 1e7 },
+  };
+
+  /**
+   * Solve for the value of one variable that makes you exactly free at `fiAge`
+   * (projected wealth = target). Uses bisection; works for any variable in REVERSIBLE
+   * or any dotted path with explicit bounds.
+   */
+  function solve(p, key, fiAge, opts) {
+    opts = opts || {};
+    const spec = REVERSIBLE[key] || { label: key, path: key };
+    const lo0 = opts.lo != null ? opts.lo : spec.lo;
+    const hi0 = opts.hi != null ? opts.hi : spec.hi;
+    if (lo0 == null || hi0 == null) throw new Error('Bounds required for "' + key + '".');
+
+    const f = function (x) { return gapAt(setPath(clone(p), spec.path, x), fiAge); };
+    let lo = lo0;
+    let hi = hi0;
+    let fLo = f(lo);
+    const fHi = f(hi);
+    if (fLo === 0) return { key: key, label: spec.label, value: lo, solved: true };
+    if (fHi === 0) return { key: key, label: spec.label, value: hi, solved: true };
+    if ((fLo > 0) === (fHi > 0)) {
+      return {
+        key: key, label: spec.label, value: null, solved: false,
+        reason: fLo > 0
+          ? 'Already free at this age across the whole range.'
+          : 'Not reachable at this age within the range.',
+      };
+    }
+    for (let i = 0; i < 200 && hi - lo > Math.max(1e-9, Math.abs(hi) * 1e-12); i++) {
+      const mid = (lo + hi) / 2;
+      const fMid = f(mid);
+      if ((fMid > 0) === (fLo > 0)) { lo = mid; fLo = fMid; } else { hi = mid; }
+    }
+    return { key: key, label: spec.label, value: (lo + hi) / 2, solved: true, current: getPath(p, spec.path) };
+  }
+
+  /** Most children (built from `template`) you can add and still be free at `fiAge`. */
+  function maxKids(p, fiAge, template, limit) {
+    limit = limit || 10;
+    let count = 0;
+    let q = clone(p);
+    q.kids = (q.kids || []).slice();
+    if (gapAt(q, fiAge) < 0) return 0;
+    while (count < limit) {
+      q.kids.push(clone(template));
+      if (gapAt(q, fiAge) < 0) break;
+      count++;
+    }
+    return count;
+  }
+
+  /** Everything the UI needs in one call. */
+  function summarize(p, fiAge) {
+    const earliest = earliestFI(p);
+    const chosen = fiAge != null ? fiAge : (earliest ? earliest.fiAge : null);
+    return {
+      earliest: earliest,
+      fiAge: chosen,
+      target: chosen != null ? target(p, chosen) : null,
+      requiredSavings: chosen != null ? requiredSavings(p, chosen) : null,
+      requiredNetIncome: chosen != null ? requiredNetIncome(p, chosen) : null,
+      currentOutflow: currentOutflow(p),
+      projection: projection(p),
+    };
+  }
+
+  /** Illustrative inputs only — real country defaults live in data/countries.json. */
+  function exampleParams() {
+    return {
+      currentAge: 30,
+      lifeExpectancy: 90,
+      currentInvestments: 50000,
+      savingsMode: 'fixed',     // 'fixed' = annualSavings each year; 'income' = netIncome − that year's spending
+      annualSavings: 20000,
+      netIncome: 110000,
+      nominalReturn: 0.07,
+      inflation: 0.025,
+      fee: 0.002,
+      withdrawalRate: 0.035,
+      method: 'swr',
+      taxRate: 0.15,
+      coreSpend: 30000,
+      medical: 1500,
+      otherAnnual: 2000,
+      buffer: 15000,
+      housing: {
+        mode: 'mortgage',
+        homePrice: 600000,
+        propertyTaxRate: 0.007,
+        maintenanceRate: 0.01,
+        insurance: 1500,
+        closingCostRate: 0.03,
+        rent: 0,
+        mortgage: { principal: 480000, rate: 0.045, termYears: 25, yearsElapsed: 2 },
+      },
+      kids: [
+        { age: 2, annualCost: 12000, independentAge: 18, educationCost: 40000, educationAge: 18 },
+        { age: -2, annualCost: 12000, independentAge: 18, educationCost: 40000, educationAge: 18 },
+      ],
+      pension: { annual: 18000, startAge: 65 },
+      longTermCare: { annual: 25000, startAge: 85 },
+    };
+  }
+
+  return {
+    realReturn: realReturn,
+    pvStream: pvStream,
+    fvSavings: fvSavings,
+    mortgagePayment: mortgagePayment,
+    mortgageBalance: mortgageBalance,
+    housing: housing,
+    kids: kids,
+    validate: validate,
+    target: target,
+    wealthAt: wealthAt,
+    outflowAt: outflowAt,
+    plannedKidCostAt: plannedKidCostAt,
+    savingsAt: savingsAt,
+    gapAt: gapAt,
+    projection: projection,
+    earliestFI: earliestFI,
+    requiredSavings: requiredSavings,
+    currentOutflow: currentOutflow,
+    requiredNetIncome: requiredNetIncome,
+    solve: solve,
+    maxKids: maxKids,
+    summarize: summarize,
+    setPath: setPath,
+    getPath: getPath,
+    REVERSIBLE: REVERSIBLE,
+    exampleParams: exampleParams,
+  };
+});
+</script>
+  <script>
+// Generated by data/build-countries.js. Do not edit by hand.
+window.FI_COUNTRIES = {
+  "schemaVersion": 1,
+  "generated": "2026-10-25",
+  "disclaimer": "Defaults are national averages for a two-adult household, for illustration only. Not financial advice.",
+  "countries": {
+    "CA": {
+      "name": "Canada",
+      "currency": "CAD",
+      "locale": "en-CA",
+      "household": "Two adults",
+      "params": {
+        "currentAge": 30,
+        "lifeExpectancy": 90,
+        "currentInvestments": 30000,
+        "savingsMode": "fixed",
+        "annualSavings": 24000,
+        "netIncome": 99000,
+        "nominalReturn": 0.07,
+        "inflation": 0.02,
+        "fee": 0.0025,
+        "withdrawalRate": 0.035,
+        "method": "swr",
+        "taxRate": 0.1,
+        "coreSpend": 43200,
+        "medical": 2820,
+        "otherAnnual": 3600,
+        "buffer": 37600,
+        "housing": {
+          "mode": "rent",
+          "rent": 25560,
+          "homePrice": 666538,
+          "propertyTaxRate": 0.0075,
+          "maintenanceRate": 0.01,
+          "insurance": 2000,
+          "closingCostRate": 0.03,
+          "mortgage": {
+            "principal": 533200,
+            "rate": 0.045,
+            "termYears": 25,
+            "yearsElapsed": 0
+          }
+        },
+        "kids": [],
+        "pension": {
+          "annual": 37400,
+          "startAge": 65
+        },
+        "longTermCare": {
+          "annual": 25550,
+          "startAge": 85
+        }
+      },
+      "kidTemplate": {
+        "age": -1,
+        "annualCost": 9700,
+        "independentAge": 18,
+        "educationCost": 30936,
+        "educationAge": 18
+      },
+      "sources": {
+        "coreSpend": {
+          "type": "derived",
+          "year": 2023,
+          "source": "Statistics Canada, Survey of Household Spending 2023",
+          "url": "https://www150.statcan.gc.ca/n1/pub/11-627-m/11-627-m2025026-eng.htm",
+          "derivation": "Average household consumption $76,750 minus shelter $24,671, health $3,087 and education $1,694 = $47,298; converted from the average household (~2.4 people) to two adults with the square-root equivalence scale (×0.913).",
+          "note": "Covers food, transport, clothing, recreation, household operation, personal care, etc. Excludes housing, utilities, health and education, which are separate inputs. 2023 dollars: roughly 5–7% below 2026 prices."
+        },
+        "medical": {
+          "type": "derived",
+          "year": 2023,
+          "source": "Statistics Canada, Survey of Household Spending 2023",
+          "url": "https://www150.statcan.gc.ca/n1/pub/11-627-m/11-627-m2025026-eng.htm",
+          "derivation": "Average household health-care spending $3,087 (includes private insurance premiums), scaled to two adults."
+        },
+        "otherAnnual": {
+          "type": "derived",
+          "year": 2017,
+          "source": "Statistics Canada, SHS modelled annual statistics (water, fuel and electricity: $2,812 in 2017)",
+          "url": "https://www150.statcan.gc.ca/n1/pub/62f0026m/2020001/tbl/tblappb-eng.htm",
+          "derivation": "$2,812 × ~1.28 CPI growth 2017→2026.",
+          "note": "Utilities. Add anything else recurring here (insurance, car replacement, travel)."
+        },
+        "housing.rent": {
+          "type": "official",
+          "year": 2026,
+          "source": "Statistics Canada / CMHC, Quarterly Rent Statistics, Q2 2026",
+          "url": "https://www150.statcan.gc.ca/n1/en/surveys/5427",
+          "derivation": "Average asking rent for a two-bedroom apartment, all census metropolitan areas: $2,130/month × 12.",
+          "note": "Asking rent for new leases; sitting tenants usually pay less. Vancouver and Toronto are much higher."
+        },
+        "housing.homePrice": {
+          "type": "reputable",
+          "year": 2026,
+          "source": "Canadian Real Estate Association (CREA), September 2026",
+          "url": "https://storeys.com/canada-homes-cheaper-september-buyers/",
+          "derivation": "National average sale price $666,538.",
+          "note": "Averages are pulled up by Toronto and Vancouver."
+        },
+        "housing.propertyTaxRate": {
+          "type": "convention",
+          "note": "Varies by municipality (roughly 0.3%–1.5% of value). Check your city."
+        },
+        "housing.maintenanceRate": {
+          "type": "convention",
+          "note": "Common 1%-of-value-per-year rule for repairs and upkeep."
+        },
+        "housing.insurance": {
+          "type": "convention",
+          "note": "Typical home insurance; get a quote."
+        },
+        "housing.closingCostRate": {
+          "type": "convention",
+          "note": "Land transfer tax + legal fees; higher in Toronto (municipal LTT)."
+        },
+        "housing.mortgage.rate": {
+          "type": "convention",
+          "note": "Check current 5-year fixed rates; the Bank of Canada was signalling a hike in Oct 2026."
+        },
+        "kids.annualCost": {
+          "type": "derived",
+          "year": 2023,
+          "source": "Derived from Statistics Canada SHS 2023 and the LIM square-root scale",
+          "url": "https://www150.statcan.gc.ca/n1/pub/11-627-m/11-627-m2025026-eng.htm",
+          "derivation": "Two-adult core spending × (√3/√2 − 1) = 43200 × 0.225. Extra household consumption for one child.",
+          "note": "Does not include full-price daycare; Canada-wide early learning fees vary by province."
+        },
+        "kids.educationCost": {
+          "type": "official",
+          "year": 2025,
+          "source": "Statistics Canada, Tuition fees 2025/2026",
+          "url": "https://www150.statcan.gc.ca/n1/daily-quotidien/250910/dq250910d-eng.htm",
+          "derivation": "Average Canadian undergraduate tuition $7,734 × 4 years.",
+          "note": "Tuition only; add living costs if they study away from home."
+        },
+        "pension.annual": {
+          "type": "derived",
+          "year": 2026,
+          "source": "Government of Canada, CPP and OAS amounts 2026",
+          "url": "https://www.canada.ca/en/employment-social-development/programs/pensions/pension/statistics/2026-quarterly-october-december.html",
+          "derivation": "Per person: average new CPP retirement pension $877.01/month (Jul–Sep 2026) + maximum OAS $762.50/month (Oct–Dec 2026). Two adults = $39,348/yr gross, less ~5% income tax.",
+          "note": "CPP max is $1,507.65/month at 65 with ~39 years of maximum contributions. Check your own statement in My Service Canada Account."
+        },
+        "pension.startAge": {
+          "type": "official",
+          "source": "Government of Canada",
+          "note": "Standard age 65; CPP can start at 60 (reduced) or 70 (increased)."
+        },
+        "lifeExpectancy": {
+          "type": "derived",
+          "year": 2024,
+          "source": "Statistics Canada, Deaths 2024",
+          "url": "https://www150.statcan.gc.ca/n1/daily-quotidien/260113/dq260113b-eng.htm",
+          "derivation": "Life expectancy at birth 82.16 (2024). Those who reach 65 live longer; planning to 90 covers longevity risk."
+        },
+        "longTermCare.annual": {
+          "type": "official",
+          "year": 2026,
+          "source": "Government of Ontario, LTC maximum co-payment from July 1, 2026",
+          "url": "https://www.ontario.ca/page/get-help-paying-long-term-care",
+          "derivation": "Basic long-stay co-payment $2,129.17/month × 12, one person, ages 85–90.",
+          "note": "Provincial rates differ. Private retirement homes cost far more."
+        },
+        "nominalReturn": {
+          "type": "reputable",
+          "year": 2025,
+          "source": "UBS Global Investment Returns Yearbook 2026 (Dimson, Marsh, Staunton)",
+          "url": "https://www.ubs.com/global/en/media/display-page-ndp/en-20260303-global-investment-returns-yearbook-2026.html",
+          "derivation": "Since 1900, global equities returned about 6.6%/yr real; the world excluding the US about 4.5%. Default 7% nominal with 2% inflation ≈ 4.9% real before fees, a deliberately conservative choice."
+        },
+        "inflation": {
+          "type": "official",
+          "source": "Bank of Canada inflation-control target (2%)",
+          "url": "https://www.bankofcanada.ca/"
+        },
+        "fee": {
+          "type": "convention",
+          "note": "Typical all-in cost of a broad index ETF portfolio."
+        },
+        "withdrawalRate": {
+          "type": "convention",
+          "note": "The 4% rule comes from US history; international studies find lower safe rates, so 3.5% is used."
+        },
+        "taxRate": {
+          "type": "derived",
+          "year": 2026,
+          "source": "Canada Revenue Agency: capital gains inclusion rate is one-half",
+          "url": "https://www.canada.ca/en/revenue-agency/news/newsroom/tax-tips/tax-tips-2025/update-cra-administration-proposed-capital-gains-taxation-changes.html",
+          "derivation": "Only the gain portion of a withdrawal is taxed, at half inclusion; TFSA withdrawals are tax-free, RRSP withdrawals fully taxed. ~10% blended is a middle estimate.",
+          "note": "Mostly TFSA → lower. Mostly RRSP → 20–30%."
+        },
+        "buffer": {
+          "type": "convention",
+          "derivation": "Six months of core + medical + utilities + rent."
+        },
+        "currentAge": {
+          "type": "personal",
+          "note": "Example only. Replace with your own number."
+        },
+        "currentInvestments": {
+          "type": "personal",
+          "note": "Example only. Replace with your own number."
+        },
+        "annualSavings": {
+          "type": "personal",
+          "note": "Example only. Replace with your own number."
+        },
+        "netIncome": {
+          "type": "personal",
+          "note": "Example only: roughly today’s average costs plus the example savings. Replace with your own."
+        }
+      }
+    },
+    "IT": {
+      "name": "Italy",
+      "currency": "EUR",
+      "locale": "it-IT",
+      "household": "Two adults",
+      "params": {
+        "currentAge": 30,
+        "lifeExpectancy": 90,
+        "currentInvestments": 15000,
+        "savingsMode": "fixed",
+        "annualSavings": 9000,
+        "netIncome": 36000,
+        "nominalReturn": 0.07,
+        "inflation": 0.02,
+        "fee": 0.0045,
+        "withdrawalRate": 0.035,
+        "method": "swr",
+        "taxRate": 0.13,
+        "coreSpend": 18600,
+        "medical": 1430,
+        "otherAnnual": 2000,
+        "buffer": 13600,
+        "housing": {
+          "mode": "rent",
+          "rent": 5256,
+          "homePrice": 162100,
+          "propertyTaxRate": 0,
+          "maintenanceRate": 0.01,
+          "insurance": 300,
+          "closingCostRate": 0.04,
+          "mortgage": {
+            "principal": 129700,
+            "rate": 0.0335,
+            "termYears": 25,
+            "yearsElapsed": 0
+          }
+        },
+        "kids": [],
+        "pension": {
+          "annual": 23500,
+          "startAge": 70
+        },
+        "longTermCare": {
+          "annual": 21000,
+          "startAge": 85
+        }
+      },
+      "kidTemplate": {
+        "age": -1,
+        "annualCost": 6100,
+        "independentAge": 18,
+        "educationCost": 5000,
+        "educationAge": 19
+      },
+      "sources": {
+        "coreSpend": {
+          "type": "derived",
+          "year": 2025,
+          "source": "ISTAT, Le spese per i consumi delle famiglie – Anno 2025",
+          "url": "https://www.istat.it/?p=137003",
+          "derivation": "€2,782/month × 12 = €33,384; minus the housing & energy division (36%, includes imputed rent) and out-of-pocket health (€1530), then converted from the average household (~2.2 people) to two adults with ISTAT’s equivalence scale (÷1.066).",
+          "note": "Average spending is above the median (€2,338/month). North-East households spend ~39% more than the South."
+        },
+        "medical": {
+          "type": "derived",
+          "year": 2024,
+          "source": "ISTAT System of Health Accounts via Corte dei Conti / GIMBE: out-of-pocket health €41.3bn (2024)",
+          "url": "https://www.quotidianosanita.it/?p=148364",
+          "derivation": "€41.3bn ÷ ~27m households, scaled to two adults. Visits, dental, drugs and diagnostics paid privately.",
+          "note": "Regional range is wide: about €1,000 per person in Lombardy vs under €400 in Basilicata."
+        },
+        "otherAnnual": {
+          "type": "convention",
+          "note": "Utilities (electricity, gas, water, TARI waste tax). Add other recurring costs here."
+        },
+        "housing.rent": {
+          "type": "official",
+          "year": 2025,
+          "source": "ISTAT, Spese per consumi 2025: average rent paid €438/month",
+          "url": "https://www.istat.it/?p=137003",
+          "derivation": "€438 × 12.",
+          "note": "Average of all existing contracts, including old ones. New leases in large cities are typically 2–3× higher; check OMI rent quotes for your zone."
+        },
+        "housing.homePrice": {
+          "type": "official",
+          "year": 2025,
+          "source": "Agenzia delle Entrate OMI & ABI, Rapporto Immobiliare Residenziale 2026",
+          "url": "https://iusletter.com/dalla-redazione/processo-esecuzione-mediazione/real-estate/mercato-residenziale-la-fotografia-di-omi-e-abi/",
+          "derivation": "Average value of a home sold in 2025: €162,100.",
+          "note": "Rome averages ~€3,000/m² vs a national asking average near €1,900/m²."
+        },
+        "housing.propertyTaxRate": {
+          "type": "official",
+          "note": "IMU does not apply to a non-luxury primary residence (prima casa). Set ~1% for a second home."
+        },
+        "housing.maintenanceRate": {
+          "type": "convention",
+          "note": "1%-of-value rule; condominium fees can be significant, add them here or in Other."
+        },
+        "housing.insurance": {
+          "type": "convention",
+          "note": "Home insurance is optional unless required by the mortgage."
+        },
+        "housing.closingCostRate": {
+          "type": "convention",
+          "note": "Prima casa: 2% registration tax on cadastral value + notary + agency. ~4% of price."
+        },
+        "housing.mortgage.rate": {
+          "type": "official",
+          "year": 2025,
+          "source": "OMI-ABI 2026: average initial mortgage rate 3.35%",
+          "url": "https://iusletter.com/dalla-redazione/processo-esecuzione-mediazione/real-estate/mercato-residenziale-la-fotografia-di-omi-e-abi/"
+        },
+        "kids.annualCost": {
+          "type": "derived",
+          "year": 2025,
+          "source": "Derived from ISTAT spending and ISTAT’s equivalence scale (3 people = 1.33)",
+          "url": "https://www.istat.it/?p=137003",
+          "derivation": "Two-adult core spending × 0.33 = 18600 × 0.33.",
+          "note": "Many Italian young adults live with parents well past 18. Raise \"independent at age\" to reflect that."
+        },
+        "kids.educationCost": {
+          "type": "reputable",
+          "year": 2024,
+          "source": "UDU research on MUR data: average fees at state universities €900–1,000/yr",
+          "url": "https://www.orizzontescuola.it/lunione-degli-universitari-denuncia-troppi-atenei-fuorilegge-sulle-tasse/",
+          "derivation": "€1,000 × 5 years (laurea + magistrale).",
+          "note": "Fees depend on family ISEE; living away from home costs far more than fees."
+        },
+        "pension.annual": {
+          "type": "derived",
+          "year": 2026,
+          "source": "INPS average new pension (H1 2026) adjusted by Ragioneria Generale dello Stato replacement-rate projections",
+          "url": "https://www.orizzontescuola.it/il-primato-dellitalia-nellarea-ocse-con-il-155-della-ricchezza-destinata-alla-previdenza-spendiamo-quasi-il-doppio-della-media/",
+          "derivation": "Average new pension €1,264/month × (58.5% ÷ 71.9%), the RGS-projected fall in the pension-to-final-salary ratio for an employee with 38 years of contributions between 2030 and 2070 = €1028/month. × 13 payments × 2 adults = €26,739 gross, less ~12% IRPEF.",
+          "note": "Lowered for today’s young workers, who are fully under the contributory system. Self-employed workers face a steeper fall. Replace with your own INPS estimate (La mia pensione futura) for accuracy."
+        },
+        "pension.startAge": {
+          "type": "derived",
+          "year": 2026,
+          "source": "Ragioneria Generale dello Stato, Rapporto n. 26: retirement age projected to reach 70 around 2060",
+          "url": "https://lespresso.it/c/opinioni/2026/2/5/calo-spesa-pensioni-numeri-crisi-demografica/59520",
+          "note": "The old-age pension age is 67 today, 67y1m in 2027 and 67y3m in 2028, then linked to life expectancy. Someone aged 30 now reaches it around 2063, so 70 is used. Lower it if you are closer to retirement."
+        },
+        "lifeExpectancy": {
+          "type": "derived",
+          "year": 2024,
+          "source": "ISTAT: life expectancy at birth 83.4 years (2024)",
+          "url": "https://www.fortuneita.com/?p=369482",
+          "derivation": "Planning to 90 covers longevity risk beyond the average."
+        },
+        "longTermCare.annual": {
+          "type": "reputable",
+          "year": 2025,
+          "source": "Patto per un Nuovo Welfare sulla Non Autosufficienza: family share of RSA fees €1,500–2,000/month",
+          "url": "https://www.disabili.com/anziani/rette-rsa-tra-vuoti-normativi-e-caos-giudiziario/",
+          "derivation": "€1,750 × 12, one person, ages 85–90.",
+          "note": "Lombardy averages are higher (~€2,500/month in Varese)."
+        },
+        "nominalReturn": {
+          "type": "reputable",
+          "year": 2025,
+          "source": "UBS Global Investment Returns Yearbook 2026 (Dimson, Marsh, Staunton)",
+          "url": "https://www.ubs.com/global/en/media/display-page-ndp/en-20260303-global-investment-returns-yearbook-2026.html",
+          "derivation": "Global equities ~6.6%/yr real since 1900. Default 7% nominal with 2% inflation is a conservative global-portfolio assumption."
+        },
+        "inflation": {
+          "type": "official",
+          "source": "European Central Bank inflation target (2%)",
+          "url": "https://www.ecb.europa.eu/"
+        },
+        "fee": {
+          "type": "derived",
+          "source": "Imposta di bollo 0.2%/yr on securities accounts + ~0.25% fund costs",
+          "url": "https://fiscoinvestimenti.it/?p=3837",
+          "derivation": "0.20% stamp duty + 0.25% ETF/broker costs."
+        },
+        "withdrawalRate": {
+          "type": "convention",
+          "note": "International research finds Italy historically among the weaker markets for the 4% rule; 3.5% is used, consider 3%."
+        },
+        "taxRate": {
+          "type": "derived",
+          "year": 2026,
+          "source": "Italian tax on financial income: 26% (12.5% on government bonds)",
+          "url": "https://fiscoinvestimenti.it/?p=14825",
+          "derivation": "26% applies only to the gain portion of each withdrawal; assuming about half of late-stage withdrawals are gains → ~13%."
+        },
+        "buffer": {
+          "type": "convention",
+          "derivation": "Six months of core + medical + utilities + rent."
+        },
+        "currentAge": {
+          "type": "personal",
+          "note": "Example only. Replace with your own number."
+        },
+        "currentInvestments": {
+          "type": "personal",
+          "note": "Example only. Replace with your own number."
+        },
+        "annualSavings": {
+          "type": "personal",
+          "note": "Example only. Replace with your own number."
+        },
+        "netIncome": {
+          "type": "personal",
+          "note": "Example only: roughly today’s average costs plus the example savings. Replace with your own."
+        }
+      }
+    }
+  }
+};
+</script>
+  <script>
+/* UI for the FI calculator. Depends on window.FIEngine (js/engine.js) and
+   window.FI_COUNTRIES (data/countries.js). No frameworks, no build step. */
+(function () {
+  'use strict';
+
+  const E = window.FIEngine;
+  const DATA = window.FI_COUNTRIES;
+  const STORE_KEY = 'fi-calculator-v1';
+  const $ = (sel) => document.querySelector(sel);
+  const clone = (o) => JSON.parse(JSON.stringify(o));
+  const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+  const BADGES = {
+    official: 'Official data',
+    derived: 'Calculated from official data',
+    reputable: 'Reputable source',
+    convention: 'Rule of thumb',
+    personal: 'Your own number',
+  };
+
+  const COMPONENTS = {
+    living: { label: 'Everyday costs, for life', color: 'var(--wealth)' },
+    pensionBridge: { label: 'Bridge until your pension starts', color: '#6f9a8f' },
+    kids: { label: 'Kids still living at home', color: '#9a7bb0' },
+    education: { label: 'University', color: '#c07a9a' },
+    longTermCare: { label: 'Care in late life', color: '#7c8b9c' },
+    housingLump: { label: 'Buying the home or paying off the mortgage', color: 'var(--target)' },
+    buffer: { label: 'Emergency cash', color: '#a8a28e' },
+  };
+
+  // Fields, grouped. `src` points at a key in the country's `sources`.
+  const owning = (p) => ['buy', 'mortgage', 'own'].includes(p.housing.mode);
+  const GROUPS = [
+    {
+      id: 'you', title: 'You', open: true, fields: [
+        { key: 'currentAge', label: 'Your age', kind: 'int', min: 16, max: 85 },
+        { key: 'lifeExpectancy', label: 'Plan until age', kind: 'int', min: 60, max: 110, src: 'lifeExpectancy' },
+        { key: 'currentInvestments', label: 'Invested today, both of you', kind: 'money', src: 'currentInvestments' },
+        { key: 'savingsMode', label: 'How you save', kind: 'select', options: [['fixed', 'A set amount each year'], ['income', 'Whatever my pay leaves over']] },
+        {
+          key: 'annualSavings', label: 'Household savings per year', kind: 'money', per: 'yr', show: (p) => p.savingsMode !== 'income', src: 'annualSavings',
+          hint: 'What you both put aside today. Planned children reduce this while they live at home.',
+        },
+        {
+          key: 'netIncome', label: 'Household take-home pay per year', kind: 'money', per: 'yr', show: (p) => p.savingsMode === 'income', src: 'netIncome',
+          hint: 'Both partners’ pay after tax. Each year you save this minus that year’s costs, so kids, tuition and the mortgage change what you can put away.',
+        },
+      ],
+    },
+    {
+      id: 'living', title: 'Everyday life', open: true, fields: [
+        { key: 'coreSpend', label: 'Living costs', kind: 'money', per: 'yr', src: 'coreSpend', hint: 'Food, transport, clothes, leisure. Not housing, health or kids.' },
+        { key: 'medical', label: 'Medical costs you pay yourself', kind: 'money', per: 'yr', src: 'medical' },
+        { key: 'otherAnnual', label: 'Utilities and anything else', kind: 'money', per: 'yr', src: 'otherAnnual' },
+        { key: 'buffer', label: 'Emergency cash to keep', kind: 'money', src: 'buffer' },
+      ],
+    },
+    {
+      id: 'home', title: 'Home', fields: [
+        { key: 'housing.mode', label: 'Your plan', kind: 'select', options: [['rent', 'Rent for life'], ['buy', 'Rent now, buy outright when I stop working'], ['mortgage', 'I own it, with a mortgage'], ['own', 'I own it outright'], ['none', 'No housing costs']] },
+        { key: 'housing.rent', label: 'Rent', kind: 'money', per: 'yr', show: (p) => ['rent', 'buy'].includes(p.housing.mode), src: 'housing.rent' },
+        { key: 'housing.homePrice', label: 'Home value', kind: 'money', show: owning, src: 'housing.homePrice' },
+        { key: 'housing.closingCostRate', label: 'Buying costs and taxes', kind: 'pct', show: (p) => p.housing.mode === 'buy', src: 'housing.closingCostRate' },
+        { key: 'housing.mortgage.principal', label: 'Mortgage you took out', kind: 'money', show: (p) => p.housing.mode === 'mortgage' },
+        { key: 'housing.mortgage.rate', label: 'Mortgage rate', kind: 'pct', show: (p) => p.housing.mode === 'mortgage', src: 'housing.mortgage.rate' },
+        { key: 'housing.mortgage.termYears', label: 'Mortgage length', kind: 'int', post: 'years', min: 1, max: 40, show: (p) => p.housing.mode === 'mortgage' },
+        { key: 'housing.mortgage.yearsElapsed', label: 'Years already paid', kind: 'int', post: 'years', min: 0, max: 40, show: (p) => p.housing.mode === 'mortgage' },
+        { key: 'housing.propertyTaxRate', label: 'Property tax, share of home value', kind: 'pct', post: '% / yr', show: owning, src: 'housing.propertyTaxRate' },
+        { key: 'housing.maintenanceRate', label: 'Upkeep, share of home value', kind: 'pct', post: '% / yr', show: owning, src: 'housing.maintenanceRate' },
+        { key: 'housing.insurance', label: 'Home insurance', kind: 'money', per: 'yr', show: owning, src: 'housing.insurance' },
+      ],
+    },
+    { id: 'kids', title: 'Kids', custom: true },
+    {
+      id: 'retire', title: 'Retirement', fields: [
+        { key: 'pension.annual', label: 'Public pension after tax, both of you', kind: 'money', per: 'yr', src: 'pension.annual' },
+        { key: 'pension.startAge', label: 'Pension starts at age', kind: 'int', min: 55, max: 75, src: 'pension.startAge' },
+        { key: 'longTermCare.annual', label: 'Care home or home care', kind: 'money', per: 'yr', src: 'longTermCare.annual' },
+        { key: 'longTermCare.startAge', label: 'Care needed from age', kind: 'int', min: 60, max: 110 },
+        { key: 'method', label: 'Your money should', kind: 'select', options: [['swr', 'Last forever (live off the returns)'], ['annuity', 'Run out at the end of the plan']] },
+        {
+          key: 'withdrawalRate', label: 'Withdrawal rate', kind: 'pct', post: '% / yr', show: (p) => p.method !== 'annuity', src: 'withdrawalRate',
+          hint: 'The share of your investments you spend each year once you stop. 3.5% of 1,000,000 is 35,000 a year. Lower is safer but needs a bigger pot.',
+        },
+      ],
+    },
+    {
+      id: 'invest', title: 'Investing', fields: [
+        { key: 'nominalReturn', label: 'Stock market return', kind: 'pct', post: '% / yr', src: 'nominalReturn' },
+        { key: 'inflation', label: 'Inflation', kind: 'pct', post: '% / yr', src: 'inflation' },
+        { key: 'fee', label: 'Fees and account taxes', kind: 'pct', post: '% / yr', src: 'fee' },
+        { key: 'taxRate', label: 'Tax on what you withdraw', kind: 'pct', src: 'taxRate' },
+      ],
+    },
+  ];
+
+  const SOLVE_DIRECTION = {
+    annualSavings: 'at least', netIncome: 'at least', currentInvestments: 'at least',
+    nominalReturn: 'at least', withdrawalRate: 'at least', pension: 'at least',
+  };
+
+  // ─────────────────────────── state ───────────────────────────
+  let state = load() || { country: Object.keys(DATA.countries)[0], params: {}, goalAge: null };
+  const country = () => DATA.countries[state.country];
+  const params = () => state.params[state.country];
+  if (!params()) state.params[state.country] = clone(country().params);
+
+  function load() {
+    try {
+      const s = JSON.parse(localStorage.getItem(STORE_KEY));
+      return s && DATA.countries[s.country] ? s : null;
+    } catch (e) { return null; }
+  }
+  function save() {
+    try { localStorage.setItem(STORE_KEY, JSON.stringify(state)); } catch (e) { /* storage unavailable */ }
+  }
+
+  // ─────────────────────────── formatting ───────────────────────────
+  function moneyFmt(compact) {
+    const c = country();
+    const locale = c.currency === 'EUR' ? 'en-IE' : 'en-CA';
+    return new Intl.NumberFormat(locale, {
+      style: 'currency', currency: c.currency, maximumFractionDigits: compact ? 1 : 0,
+      notation: compact ? 'compact' : 'standard',
+    });
+  }
+  const money = (v) => moneyFmt(false).format(Math.round(v));
+  const compact = (v) => moneyFmt(true).format(v);
+  const pct = (v) => (Math.round(v * 1000) / 10).toLocaleString('en') + '%';
+  const symbol = () => (country().currency === 'EUR' ? '€' : '$');
+
+  // ─────────────────────────── country switch ───────────────────────────
+  function renderCountries() {
+    const el = $('#country');
+    el.innerHTML = Object.entries(DATA.countries).map(([code, c]) =>
+      `<button type="button" role="radio" data-code="${code}" aria-checked="${code === state.country}">${esc(c.name)}</button>`).join('');
+    el.onclick = (e) => {
+      const b = e.target.closest('button');
+      if (!b || b.dataset.code === state.country) return;
+      state.country = b.dataset.code;
+      if (!params()) state.params[state.country] = clone(country().params);
+      state.goalAge = null;
+      state.goalPinned = false;
+      renderCountries();
+      renderForm();
+      update();
+    };
+  }
+
+  // ─────────────────────────── form ───────────────────────────
+  function sourceHtml(srcKey) {
+    const s = country().sources[srcKey];
+    if (!s) return '';
+    const parts = [`<p><span class="badge ${s.type}">${BADGES[s.type] || s.type}</span>${s.year ? `, ${s.year}` : ''}</p>`];
+    if (s.source) parts.push(`<p>${s.url ? `<a href="${esc(s.url)}" target="_blank" rel="noopener">${esc(s.source)}</a>` : esc(s.source)}</p>`);
+    if (s.derivation) parts.push(`<p>${esc(s.derivation)}</p>`);
+    if (s.note) parts.push(`<p>${esc(s.note)}</p>`);
+    return parts.join('');
+  }
+
+  function fieldHtml(f, id, value) {
+    let control;
+    if (f.kind === 'select') {
+      control = `<select id="${id}" data-key="${f.key}">${f.options.map(([v, l]) =>
+        `<option value="${v}"${v === value ? ' selected' : ''}>${esc(l)}</option>`).join('')}</select>`;
+    } else {
+      const shown = f.kind === 'pct' ? +(value * 100).toFixed(3) : value;
+      const step = f.kind === 'pct' ? '0.1' : f.kind === 'money' ? '100' : '1';
+      const pre = f.kind === 'money' ? `<span class="affix pre">${symbol()}</span>` : '';
+      const post = f.post || (f.kind === 'pct' ? '%' : f.per ? '/ year' : '');
+      control = `${pre}<input id="${id}" data-key="${f.key}" data-kind="${f.kind}" type="number" inputmode="decimal" step="${step}"${f.min != null ? ` min="${f.min}"` : ''}${f.max != null ? ` max="${f.max}"` : ''} value="${shown}">${post ? `<span class="affix post">${esc(post)}</span>` : ''}`;
+    }
+    const src = f.src && country().sources[f.src];
+    return `<div class="field" data-field="${f.key}">
+      <div class="field-head"><label for="${id}">${esc(f.label)}</label>${src ? `<button type="button" class="src-toggle" aria-expanded="false" aria-controls="${id}-src">Source</button>` : ''}</div>
+      <div class="control">${control}</div>
+      ${f.hint ? `<p class="hint">${esc(f.hint)}</p>` : ''}
+      ${src ? `<div class="src" id="${id}-src" hidden>${sourceHtml(f.src)}</div>` : ''}
+    </div>`;
+  }
+
+  function kidsHtml() {
+    const p = params();
+    const rows = p.kids.map((k, i) => `
+      <div class="kid" data-kid="${i}">
+        <div class="kid-head"><span>Child ${i + 1}</span><button type="button" class="link-btn danger" data-remove="${i}">Remove</button></div>
+        ${fieldHtml({ key: `kids.${i}.age`, label: 'Age today', kind: 'int', min: -15, max: 40, hint: 'Use a negative number for a planned child: −2 means born in two years.' }, `kid-${i}-age`, k.age)}
+        ${fieldHtml({ key: `kids.${i}.annualCost`, label: 'Cost per year', kind: 'money', per: 'yr', src: 'kids.annualCost' }, `kid-${i}-cost`, k.annualCost)}
+        ${fieldHtml({ key: `kids.${i}.independentAge`, label: 'Independent at age', kind: 'int', min: 14, max: 40 }, `kid-${i}-indep`, k.independentAge)}
+        ${fieldHtml({ key: `kids.${i}.educationCost`, label: 'University, total', kind: 'money', src: 'kids.educationCost' }, `kid-${i}-edu`, k.educationCost)}
+      </div>`).join('');
+    const modeHint = p.savingsMode !== 'income' && p.kids.length
+      ? '<p class="hint">Planned children (negative age) come out of your yearly savings while they live at home. Children you already have are part of today’s budget, so only their costs after you stop are added.</p>' : '';
+    return `${modeHint}${rows || '<p class="hint">No kids in the plan. Add current or planned children to include what they cost.</p>'}
+      <button type="button" class="add-kid" id="add-kid">Add a child</button>`;
+  }
+
+  function groupPeek(g) {
+    const p = params();
+    if (g.id === 'kids') return p.kids.length ? `${p.kids.length}` : 'None';
+    if (g.id === 'home') return GROUPS[2].fields[0].options.find(([v]) => v === p.housing.mode)[1];
+    return '';
+  }
+
+  function renderForm() {
+    const p = params();
+    $('#form').innerHTML = GROUPS.map((g) => `
+      <details class="group" data-group="${g.id}"${g.open ? ' open' : ''}>
+        <summary><span>${esc(g.title)}</span><span class="peek">${esc(groupPeek(g))}</span></summary>
+        <div class="group-body">${g.custom ? kidsHtml() : g.fields.map((f) => fieldHtml(f, 'f-' + f.key.replace(/\./g, '-'), E.getPath(p, f.key))).join('')}</div>
+      </details>`).join('');
+    applyVisibility();
+    $('#disclaimer').textContent = DATA.disclaimer;
+  }
+
+  function rerenderGroup(id) {
+    const details = document.querySelector(`[data-group="${id}"]`);
+    const g = GROUPS.find((x) => x.id === id);
+    details.querySelector('.group-body').innerHTML = g.custom ? kidsHtml()
+      : g.fields.map((f) => fieldHtml(f, 'f-' + f.key.replace(/\./g, '-'), E.getPath(params(), f.key))).join('');
+    details.querySelector('.peek').textContent = groupPeek(g);
+    applyVisibility();
+  }
+
+  function applyVisibility() {
+    const p = params();
+    GROUPS.forEach((g) => (g.fields || []).forEach((f) => {
+      const el = document.querySelector(`[data-field="${f.key}"]`);
+      if (el) el.hidden = f.show ? !f.show(p) : false;
+    }));
+  }
+
+  function onInput(e) {
+    const el = e.target;
+    const key = el.dataset && el.dataset.key;
+    if (!key) return;
+    let v;
+    if (el.tagName === 'SELECT') v = el.value;
+    else {
+      if (el.value === '' || isNaN(+el.value)) return;
+      v = +el.value;
+      if (el.dataset.kind === 'pct') v = v / 100;
+      if (el.dataset.kind === 'int') v = Math.round(v);
+    }
+    E.setPath(params(), key, v);
+    if (el.tagName === 'SELECT') {
+      applyVisibility();
+      const peek = el.closest('details').querySelector('.peek');
+      const g = GROUPS.find((x) => x.id === el.closest('details').dataset.group);
+      peek.textContent = groupPeek(g);
+      if (key === 'savingsMode') rerenderGroup('kids');
+    }
+    if (key === 'currentAge' || key === 'lifeExpectancy') { state.goalAge = null; state.goalPinned = false; }
+    update();
+  }
+
+  function onClick(e) {
+    const t = e.target;
+    if (t.classList.contains('src-toggle')) {
+      const panel = document.getElementById(t.getAttribute('aria-controls'));
+      const open = panel.hidden;
+      panel.hidden = !open;
+      t.setAttribute('aria-expanded', String(open));
+      t.textContent = open ? 'Hide source' : 'Source';
+    } else if (t.id === 'add-kid') {
+      params().kids.push(clone(country().kidTemplate));
+      rerenderGroup('kids');
+      update();
+    } else if (t.dataset.remove != null) {
+      params().kids.splice(+t.dataset.remove, 1);
+      rerenderGroup('kids');
+      update();
+    }
+  }
+
+  // ─────────────────────────── chart ───────────────────────────
+  // Step size of 1, 2, 2.5 or 5 × 10^n, so four gridlines land on round numbers.
+  function niceStep(v) {
+    if (!(v > 0)) return 1;
+    const mag = Math.pow(10, Math.floor(Math.log10(v)));
+    const n = v / mag;
+    return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * mag;
+  }
+
+  function chartSvg(rows, earliest, goalAge) {
+    const W = Math.max(320, Math.round($('#chart').clientWidth || 760));
+    const narrow = W < 520;
+    const H = narrow ? 240 : 320, m = { l: narrow ? 52 : 64, r: 16, t: 28, b: 34 };
+    const x0 = rows[0].age, x1 = rows[rows.length - 1].age;
+    const peak = Math.max(...rows.map((r) => r.target));
+    const yMax = niceStep((peak * 1.6) / 4) * 4;
+    const x = (a) => m.l + ((a - x0) / Math.max(1, x1 - x0)) * (W - m.l - m.r);
+    const y = (v) => m.t + (1 - Math.max(0, v) / yMax) * (H - m.t - m.b);
+    const line = (key) => rows.map((r, i) => `${i ? 'L' : 'M'}${x(r.age).toFixed(1)},${y(r[key]).toFixed(1)}`).join('');
+    const area = `${line('wealth')}L${x(x1).toFixed(1)},${y(0)}L${x(x0).toFixed(1)},${y(0)}Z`;
+
+    let grid = '';
+    for (let i = 0; i <= 4; i++) {
+      const v = (yMax / 4) * i;
+      grid += `<line class="grid" x1="${m.l}" x2="${W - m.r}" y1="${y(v)}" y2="${y(v)}"/><text class="tick" x="${m.l - 10}" y="${y(v) + 4}" text-anchor="end">${compact(v)}</text>`;
+    }
+    const span = x1 - x0;
+    const step = span > 40 ? 10 : 5;
+    for (let a = Math.ceil(x0 / step) * step; a <= x1; a += step) {
+      grid += `<text class="tick" x="${x(a)}" y="${H - 10}" text-anchor="middle">${a}</text>`;
+    }
+
+    let marks = '';
+    if (goalAge != null && goalAge >= x0 && goalAge <= x1) {
+      marks += `<line class="goal-line" x1="${x(goalAge)}" x2="${x(goalAge)}" y1="${m.t - 10}" y2="${y(0)}"/>`;
+    }
+    if (earliest) {
+      const cx = x(earliest.fiAge), cy = y(earliest.target.total);
+      const anchor = cx > W - 140 ? 'end' : 'start';
+      marks += `<circle class="cross" cx="${cx}" cy="${cy}" r="7"/><text class="cross-label" x="${cx + (anchor === 'end' ? -12 : 12)}" y="${cy - 12}" text-anchor="${anchor}">Free at ${earliest.fiAge}</text>`;
+    }
+    // Lines that run above the top of the chart are clipped rather than flattened.
+    return `<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="Projected investments compared with the amount needed, by age">
+      <defs><clipPath id="plot"><rect x="${m.l}" y="${m.t - 2}" width="${W - m.l - m.r}" height="${H - m.t - m.b + 2}"/></clipPath></defs>
+      ${grid}<g clip-path="url(#plot)"><path class="wealth-area" d="${area}"/><path class="target" d="${line('target')}"/><path class="wealth" d="${line('wealth')}"/></g>${marks}</svg>
+      <figcaption><span class="key">What you’ll have invested</span><span class="key t">What you’d need to stop at that age</span></figcaption>`;
+  }
+
+  // ─────────────────────────── results ───────────────────────────
+  function update() {
+    save();
+    const p = params();
+    const err = $('#error');
+    const errors = E.validate(p);
+    if (errors.length) {
+      err.hidden = false;
+      err.textContent = errors.join(' ');
+      return;
+    }
+    err.hidden = true;
+
+    const minGoal = p.currentAge, maxGoal = p.lifeExpectancy - 1;
+    let summary;
+    try {
+      const earliest = E.earliestFI(p);
+      if (!state.goalPinned || state.goalAge == null || state.goalAge < minGoal || state.goalAge > maxGoal) {
+        state.goalAge = earliest ? earliest.fiAge : Math.min(maxGoal, Math.max(minGoal, 55));
+      }
+      summary = E.summarize(p, state.goalAge);
+    } catch (e) {
+      err.hidden = false;
+      err.textContent = e.message;
+      return;
+    }
+
+    renderVerdict(p, summary);
+    $('#chart').innerHTML = chartSvg(summary.projection, summary.earliest, state.goalAge);
+    renderGoal(p, summary, minGoal, maxGoal);
+    renderBreakdown(p, summary.target);
+    renderSolve(p);
+  }
+
+  function renderVerdict(p, s) {
+    const e = s.earliest;
+    const bar = $('#mobile-bar');
+    if (e && e.fiAge === p.currentAge) {
+      $('#verdict').innerHTML = `<p class="lead">You could stop working</p><span class="age not">today</span>
+        <p class="sub">Your <strong class="w">${money(e.wealth)}</strong> already covers the <strong class="t">${money(e.target.total)}</strong> you need.</p>`;
+      bar.textContent = 'Free today';
+    } else if (e) {
+      $('#verdict').innerHTML = `<p class="lead">You can be financially free at</p><span class="age">${e.fiAge}</span>
+        <p class="sub">That’s in ${e.years} year${e.years === 1 ? '' : 's'}. By then you’ll have about <strong class="w">${money(e.wealth)}</strong> invested, enough to cover the <strong class="t">${money(e.target.total)}</strong> you need from that point on.</p>`;
+      bar.textContent = `Free at ${e.fiAge}`;
+    } else {
+      $('#verdict').innerHTML = `<p class="lead">At this pace</p><span class="age not">You won’t be free before ${p.lifeExpectancy}</span>
+        <p class="sub">Move the slider to pick when you’d like to stop, and see what it takes.</p>`;
+      bar.textContent = `Not free before ${p.lifeExpectancy}`;
+    }
+  }
+
+  function renderGoal(p, s, min, max) {
+    const slider = $('#goal-age');
+    slider.min = min; slider.max = max; slider.value = state.goalAge;
+    $('#goal-age-out').textContent = state.goalAge;
+    const t = s.target;
+    const have = E.wealthAt(p, state.goalAge - p.currentAge);
+    const gap = have - t.total;
+    const rs = s.requiredSavings;
+    const ri = s.requiredNetIncome;
+    const months = (v) => `${money(v / 12)}<small> / month</small>`;
+    const rows = [
+      ['You’d need invested', money(t.total)],
+      ['You’ll have', money(have)],
+      [gap >= 0 ? 'Spare' : 'Short by', `<span class="${gap >= 0 ? '' : 'bad'}">${money(Math.abs(gap))}</span>`],
+    ];
+    const planned = p.kids.some((k) => k.age < 0);
+    if (rs && rs.annual != null) rows.push([planned ? 'Save, before planned kids' : 'Household savings needed', months(rs.annual)]);
+    else if (rs) rows.push(['Lump sum needed today', money(rs.lumpShortfall)]);
+    if (ri && ri.annual != null) rows.push(['Household take-home pay needed', months(ri.annual)]);
+    rows.push(['Yearly costs once free', `${money(t.annualNeed)}<small> / yr</small>`]);
+    $('#goal-figures').innerHTML = rows.map(([k, v]) => `<div><dt>${k}</dt><dd>${v}</dd></div>`).join('');
+  }
+
+  function renderBreakdown(p, t) {
+    const entries = Object.entries(t.components).filter(([, v]) => v > 0.5);
+    const total = t.total || 1;
+    const pensionLine = t.pensionUsed > 0
+      ? ` Your pension covers ${money(t.pensionUsed)} a year from age ${p.pension.startAge}.`
+      : '';
+    $('#breakdown').innerHTML = `<h2>Where the ${money(t.total)} goes</h2>
+      <p class="intro">If you stop at ${t.fiAge}. Includes tax on withdrawals at ${pct(p.taxRate)}.${pensionLine}</p>
+      <div class="stack" aria-hidden="true">${entries.map(([k, v]) => `<span style="width:${(v / total) * 100}%;background:${COMPONENTS[k].color}"></span>`).join('')}</div>
+      <ul class="parts">${entries.map(([k, v]) => `<li><span class="sw" style="background:${COMPONENTS[k].color}"></span><span>${COMPONENTS[k].label}</span><span class="val">${money(v)}</span><span class="pct">${Math.round((v / total) * 100)}%</span></li>`).join('')}
+      <li class="total"><span></span><span>Total</span><span class="val">${money(t.total)}</span><span class="pct"></span></li></ul>`;
+  }
+
+  function solveOptions(p) {
+    const opts = ['coreSpend', 'medical', 'otherAnnual', 'currentInvestments', 'nominalReturn', 'pension'];
+    opts.unshift(p.savingsMode === 'income' ? 'netIncome' : 'annualSavings');
+    if (['rent', 'buy'].includes(p.housing.mode)) opts.push('rent');
+    if (['buy', 'mortgage', 'own'].includes(p.housing.mode)) opts.push('homePrice');
+    if (p.kids.length) opts.push('kidAnnualCost');
+    if (p.method !== 'annuity') opts.push('withdrawalRate');
+    return opts;
+  }
+
+  function renderSolve(p) {
+    const opts = solveOptions(p);
+    if (!opts.includes(state.solveKey)) state.solveKey = opts[0];
+    $('#solve').innerHTML = `<h2>Work backwards</h2>
+      <p class="intro">Pick one number. Everything else stays as you set it, and this finds the value that lets you stop at ${state.goalAge}.</p>
+      <div class="solve-row"><div class="control"><select id="solve-key" aria-label="Number to solve for">${opts.map((k) =>
+        `<option value="${k}"${k === state.solveKey ? ' selected' : ''}>${esc(E.REVERSIBLE[k].label)}</option>`).join('')}</select></div></div>
+      <p class="answer" id="solve-answer"></p>
+      <p class="answer" id="kids-answer"></p>`;
+    $('#solve-key').onchange = (e) => { state.solveKey = e.target.value; save(); answer(p); };
+    answer(p);
+  }
+
+  const HIGHER_IS_EASIER = ['annualSavings', 'netIncome', 'currentInvestments', 'nominalReturn', 'withdrawalRate', 'pension'];
+
+  function answer(p) {
+    const key = state.solveKey;
+    const spec = E.REVERSIBLE[key];
+    const A = state.goalAge;
+    const isPct = key === 'nominalReturn' || key === 'withdrawalRate';
+    const fmt = (v) => (isPct ? pct(v) : money(v));
+    const name = spec.label.charAt(0).toLowerCase() + spec.label.slice(1);
+    const out = $('#solve-answer');
+    let res;
+    try { res = E.solve(p, key, A); } catch (e) { res = { solved: false, reason: e.message }; }
+
+    if (!res.solved) {
+      out.className = 'answer none';
+      out.textContent = res.reason && res.reason.startsWith('Already')
+        ? `You can stop at ${A} whatever this is, within a realistic range.`
+        : `No realistic value of this alone gets you there by ${A}. Try a later age or change another number too.`;
+    } else {
+      const v = res.value;
+      const now = E.getPath(p, spec.path);
+      const up = HIGHER_IS_EASIER.includes(key);          // raising it makes stopping easier
+      const room = up ? now >= v : now <= v;               // current plan already works
+      out.className = 'answer';
+      if (key === 'withdrawalRate') {
+        out.innerHTML = room
+          ? `You have room to be more careful: you could plan a safer withdrawal rate as low as <strong>${fmt(v)}</strong> (now ${fmt(now)}) and still stop at ${A}.`
+          : `To stop at ${A} you’d have to withdraw at least <strong>${fmt(v)}</strong> a year (now ${fmt(now)}). Rates above 4% have often run out in history, so a later age is the safer fix.`;
+      } else if (room) {
+        out.innerHTML = up
+          ? `You have room to spare: ${esc(name)} could drop to <strong>${fmt(v)}</strong> (now ${fmt(now)}) and you could still stop at ${A}.`
+          : `You have room to spare: ${esc(name)} could go up to <strong>${fmt(v)}</strong> (now ${fmt(now)}) and you could still stop at ${A}.`;
+      } else {
+        out.innerHTML = up
+          ? `To stop at ${A}, ${esc(name)} needs to rise to at least <strong>${fmt(v)}</strong> (now ${fmt(now)}).`
+          : `To stop at ${A}, ${esc(name)} needs to come down to <strong>${fmt(v)}</strong> or less (now ${fmt(now)}).`;
+      }
+    }
+
+    // Kids: a child born next year costs you twice, in lower savings while they're
+    // at home and in any costs left after you stop. Compare that with the spare money.
+    const k = $('#kids-answer');
+    k.className = 'answer none';
+    try {
+      const tpl = country().kidTemplate;
+      const spare = E.gapAt(p, A);
+      const withOne = clone(p); withOne.kids.push(clone(tpl));
+      const costOfOne = spare - E.gapAt(withOne, A);
+      const n = E.maxKids(p, A, tpl, 6);
+      const each = `A child born next year at the national average cost (${money(tpl.annualCost)} a year) would leave you about ${money(costOfOne)} short of where you’d otherwise be by ${A}, mostly through lower savings while they’re at home.`;
+      if (spare < 0) k.textContent = `${each} Your plan is already short at ${A}.`;
+      else if (n === 0) k.textContent = `${each} You have ${money(spare)} spare, so that would push you past ${A}.`;
+      else k.textContent = `${each} You have ${money(spare)} spare at ${A}, so you could afford ${n === 6 ? '6 or more' : n} ${p.kids.length ? 'more ' : ''}${n === 1 ? 'child' : 'children'} and still stop then, with less left over.`;
+    } catch (e) { k.textContent = ''; }
+  }
+
+  // ─────────────────────────── wiring ───────────────────────────
+  $('#form').addEventListener('input', onInput);
+  $('#form').addEventListener('change', onInput);
+  $('#form').addEventListener('click', onClick);
+  $('#goal-age').addEventListener('input', (e) => { state.goalAge = +e.target.value; state.goalPinned = true; update(); });
+  let resizeTimer;
+  window.addEventListener('resize', () => { clearTimeout(resizeTimer); resizeTimer = setTimeout(update, 120); });
+  $('#reset').addEventListener('click', () => {
+    state.params[state.country] = clone(country().params);
+    state.goalAge = null;
+    state.goalPinned = false;
+    renderForm();
+    update();
+  });
+  $('#mobile-bar').addEventListener('click', () => window.scrollTo({ top: 0, behavior: 'smooth' }));
+
+  renderCountries();
+  renderForm();
+  update();
+})();
+</script>
+</body>
+</html>
