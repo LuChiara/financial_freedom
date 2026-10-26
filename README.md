@@ -2,7 +2,14 @@
 
 A calculator that turns a whole life into one number: how much you need invested to stop working for good, and the age you can do it at. It starts from official national averages for **Canada** and **Italy**, and every number can be changed.
 
-**Open `index.html` in a browser and it works.** No install, no build step, no server, no tracking.
+**Download and open `How much do I need to be financially free.html` in a browser and it works.** No install, no build step, no server, no tracking.
+
+Example outputs:
+
+<img width="846" height="626" alt="fi_main" src="https://github.com/user-attachments/assets/0894b332-545c-4234-9135-d217d449d8bc" />
+<img width="831" height="333" alt="fi_breakdown" src="https://github.com/user-attachments/assets/1122c828-4b1b-44cd-915d-393c6ccf746f" />
+<img width="823" height="221" alt="fi_backwards" src="https://github.com/user-attachments/assets/4bb4ac91-9c95-4a0d-a969-0cbc82fab8c9" />
+
 
 ## What it does
 
