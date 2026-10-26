@@ -1,0 +1,13 @@
+{
+  "name": "fi-calculator",
+  "version": "1.0.0",
+  "description": "How much do I need to be financially free? A plug-and-play calculator with official data for Canada and Italy.",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "build:data": "node data/build-countries.js",
+    "bundle": "node tools/bundle.js"
+  },
+  "engines": { "node": ">=18" }
+}

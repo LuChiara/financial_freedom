@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>How much do I need to be financially free?</title>
+  <meta name="description" content="Work out how much you need to stop working for good, using official data for Canada and Italy. Change any number, or solve backwards for what you need to earn, save or spend.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+  <header class="masthead">
+    <div class="masthead-inner">
+      <h1>How much do I need to be financially free?</h1>
+      <div class="country" role="radiogroup" aria-label="Country" id="country"></div>
+    </div>
+  </header>
+
+  <main class="layout">
+    <section class="inputs" aria-label="Your numbers">
+      <form id="form" novalidate></form>
+      <button type="button" class="reset" id="reset">Reset to national averages</button>
+    </section>
+
+    <section class="results" aria-live="polite" aria-label="Results">
+      <div class="verdict" id="verdict"></div>
+      <figure class="chart" id="chart"></figure>
+
+      <div class="goal" id="goal">
+        <label for="goal-age" class="goal-label">Stop working at <output id="goal-age-out"></output></label>
+        <input type="range" id="goal-age">
+        <dl class="goal-figures" id="goal-figures"></dl>
+      </div>
+
+      <div class="panel" id="breakdown"></div>
+      <div class="panel" id="solve"></div>
+      <p class="error" id="error" hidden></p>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p id="disclaimer"></p>
+    <p>All amounts are in today’s money. Read <a href="METHODOLOGY.md">how this is calculated</a>, or see <a href="data/countries.json">every default and its source</a>.</p>
+  </footer>
+
+  <div class="mobile-bar" id="mobile-bar" aria-hidden="true"></div>
+
+  <script src="js/engine.js"></script>
+  <script src="data/countries.js"></script>
+  <script src="js/ui.js"></script>
+</body>
+</html>
