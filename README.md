@@ -30,7 +30,7 @@ FI target = [ Living + Bridge + Kids + University + Care + Home + Buffer ] ÷ (1
 You're free at the first age where:  invested today × (1+r)^n + savings × ((1+r)^n − 1) ÷ r  ≥  FI target
 ```
 
-See [METHODOLOGY.md](METHODOLOGY.md) for every assumption and timing convention.
+See [METHODOLOGY.md](fi-calculator/METHODOLOGY.md) for every assumption and timing convention.
 
 ## Publish it with GitHub Pages
 
