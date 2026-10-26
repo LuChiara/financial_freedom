@@ -1,0 +1,4 @@
+# Publish only the self-contained calculator page, served as the site's home page.
+[build]
+  command = "mkdir -p site && cp 'How much do I need to be financially free.html' site/index.html"
+  publish = "site"
