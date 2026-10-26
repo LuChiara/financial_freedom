@@ -99,7 +99,7 @@ npm run bundle       # optional: dist/fi-calculator.html as a single file
 
 ## Disclaimer
 
-This is an educational tool, not financial, tax or legal advice. Check important decisions with a qualified professional.
+This is a self-built tool, not financial, tax or legal advice. Check important decisions with a qualified professional.
 
 ## License
 
